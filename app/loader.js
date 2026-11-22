@@ -294,21 +294,10 @@ async function checkGameFiles() {
 // Boot
 // ============================================================
 async function boot() {
-  // Check renderer
-  if (params.get('renderer') === 'gl' && webgl2Ok()) {
-    window.RC_RENDERER = 'gl';
-  } else if (!navigator.gpu) {
-    if (webgl2Ok()) window.RC_RENDERER = 'gl';
-    else { status('WebGPU or WebGL 2 not supported.'); return; }
-  } else {
-    const adapter = await navigator.gpu.requestAdapter({ powerPreference: 'high-performance' }).catch(() => null)
-      || await navigator.gpu.requestAdapter().catch(() => null)
-      || await navigator.gpu.requestAdapter({ featureLevel: 'compatibility' }).catch(() => null)
-      || await navigator.gpu.requestAdapter({ forceFallbackAdapter: true }).catch(() => null);
-    if (!adapter && webgl2Ok()) window.RC_RENDERER = 'gl';
-    else if (!adapter) { status('No graphics adapter found.'); return; }
-  }
-
+  show('home');
+  status('');
+  window.RC_RENDERER = 'gl';
+}
   // Check game files
   const hasFiles = await checkGameFiles();
   if (!hasFiles) {

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>IGI 2</title>
 <style>
 *{box-sizing:border-box}
@@ -14,17 +14,20 @@ canvas{width:100%;height:100%;display:block}
 .view{width:min(100%,480px);text-align:center}
 .brand{margin:0 0 8px;font-size:30px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;text-shadow:0 2px 18px rgba(0,0,0,.7)}
 .tagline{margin:0 0 24px;color:#9fb3a5}
-#status{color:#9fb3a5;max-width:50ch;margin:0 auto 16px;min-height:1.5em}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 28px;border:0;border-radius:14px;background:#34b866;color:#04110a;font:700 17px/1 system-ui,sans-serif;cursor:pointer}
+#status{color:#9fb3a5;max-width:50ch;margin:0 auto 16px;min-height:1.5em;font-size:14px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 28px;border:0;border-radius:14px;background:#34b866;color:#04110a;font:700 17px/1 system-ui,sans-serif;cursor:pointer;width:min(100%,300px);margin:0 auto 10px}
 .btn:active{background:#45cf79}
+.btn.ghost{background:transparent;color:#eef4ef;border:1px solid rgba(255,255,255,.2);font-weight:600}
+.btn.ghost:active{background:rgba(255,255,255,.08)}
 .device{margin:20px auto 0;width:min(100%,280px);display:flex;border:1px solid rgba(255,255,255,.12);border-radius:10px;overflow:hidden}
 .device button{flex:1;padding:10px 8px;border:0;background:transparent;color:#9fb3a5;font:600 13px system-ui,sans-serif;cursor:pointer}
 .device button.on{background:#34b866;color:#04140a}
 #booting{position:absolute;inset:0;z-index:4;display:grid;place-items:center;text-align:center;color:#eef4ef;background:#060d08}
 .boot-title{font-size:24px;font-weight:800;text-transform:uppercase;margin:0 0 6px}
-.boot-phase{color:#9fb3a5;margin:0}
+.boot-phase{color:#9fb3a5;margin:0;font-size:14px}
 #fs{position:absolute;right:12px;bottom:12px;z-index:2;width:40px;height:40px;display:grid;place-items:center;padding:0;border:1px solid rgba(255,255,255,.18);border-radius:10px;background:rgba(0,0,0,.55);color:#fff;cursor:pointer}
 #fs svg{width:20px;height:20px}
+#debuglog{position:fixed;left:0;right:0;bottom:0;max-height:40vh;overflow:auto;z-index:99999;background:rgba(0,0,0,.92);color:#9fe6b0;font:11px/1.4 monospace;padding:8px;white-space:pre-wrap;display:none}
 </style>
 </head>
 <body>
@@ -33,23 +36,17 @@ canvas{width:100%;height:100%;display:block}
 <button id="fs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
 
 <div id="panel">
-  <!-- HOME – Pehle se visible (hidden NAHI hai) -->
   <section id="view-home" class="view">
     <h1 class="brand">IGI 2</h1>
     <p class="tagline">Covert Strike</p>
-    <p id="status"></p>
+    <p id="status">Tap Play to start</p>
+    <button id="pick" class="btn ghost">📁 Select Game Folder</button>
     <button id="play" class="btn">▶ Play</button>
     <div class="device" id="device">
       <button type="button" data-device="touch">Phone</button>
       <button type="button" data-device="pc" class="on">Keyboard</button>
     </div>
-    <p style="margin-top:16px;font-size:13px;color:#6f8576"><a href="#" id="reset" style="color:#9fb3a5">Reload</a></p>
-  </section>
-
-  <!-- LOADING – hidden (sirf error pe show hoga) -->
-  <section id="view-loading" class="view hidden">
-    <h1 class="brand">IGI 2</h1>
-    <p id="status2">Loading…</p>
+    <p style="margin-top:16px;font-size:12px;color:#6f8576"><a href="#" id="reset" style="color:#9fb3a5">Reload</a></p>
   </section>
 </div>
 
@@ -58,6 +55,7 @@ canvas{width:100%;height:100%;display:block}
   <p class="boot-phase">Starting…</p>
 </div>
 </div>
+<div id="debuglog"></div>
 
 <script src="lan.js"></script>
 <script src="controls.js"></script>

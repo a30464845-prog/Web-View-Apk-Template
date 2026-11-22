@@ -103,6 +103,8 @@ public class MainActivity extends Activity {
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
         s.setAllowFileAccess(true);
+        s.setAllowFileAccessFromFileURLs(true);          // ← YE ADD KARO
+        s.setAllowUniversalAccessFromFileURLs(true);     // ← YE ADD KARO
         s.setMediaPlaybackRequiresUserGesture(false);
         s.setGeolocationEnabled(true);
         s.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);

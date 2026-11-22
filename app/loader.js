@@ -122,19 +122,10 @@ async function startEngine(touch){
 }
 
 // Select Game Folder
-$('pick').onclick=async()=>{
-  dbg('Select Game Folder pressed');
-  $('status').textContent='Checking game files…';
-  await new Promise(r=>setTimeout(r,500));
-  try{
-    const r=await fetch('game/igi2.exe',{method:'HEAD'});
-    if(r.ok)$('status').textContent='✅ Game files found! Press Play.';
-    else{$('status').textContent='❌ igi2.exe not found in game/ folder.';dbg('game/igi2.exe not found','#ff8b8b')}
-  }catch(e){
-    $('status').textContent='❌ game/ folder not accessible. Place IGI 2 files in game/ folder.';
-    dbg('fetch failed: '+e.message,'#ff8b8b');
-  }
-};
+$('pick').onclick=()=>{
+  $('status').textContent='Game files (app/game/) APK ke andar hote hain. Play dabao – agar files nahi hain toh engine khud error dega.';
+  dbg('Note: game files must be in app/game/ folder inside the APK');
+};   
 
 // Play
 $('play').onclick=()=>run();

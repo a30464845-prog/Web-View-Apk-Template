@@ -3,93 +3,62 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>IGI 2: Covert Strike</title>
-<meta name="theme-color" content="#070b08">
+<title>IGI 2</title>
 <style>
-:root {
-  --bg: #070b08; --fg: #eef4ef; --muted: #9fb3a5; --faint: #6f8576;
-  --accent: #34b866; --accent-hi: #45cf79;
-  --card: rgba(255,255,255,.055); --line: rgba(255,255,255,.12);
-  --field: rgba(0,0,0,.28); --radius: 14px;
-  color-scheme: dark;
-}
-* { box-sizing: border-box; }
-html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg);
-  font: 15px/1.5 ui-sans-serif, system-ui, sans-serif; overflow: hidden; }
-main { min-height: 100%; display: flex; align-items: center; justify-content: center; }
-.hidden { display: none !important; }
-#stage { position: relative; width: 100%; height: 100%; background: #000; }
-#stage:fullscreen { width: 100vw; height: 100vh; }
-canvas { width: 100%; height: 100%; display: block; }
-#panel { position: absolute; inset: 0; display: grid; place-items: center; padding: 28px;
-  background: radial-gradient(140% 120% at 50% 110%, #123d22 0%, #0b2414 45%, #060d08 100%); }
-.view { width: min(100%, 480px); text-align: center; }
-.brand { margin: 0 0 8px; font-size: 30px; font-weight: 800; letter-spacing: .02em;
-  text-transform: uppercase; text-shadow: 0 2px 18px rgba(0,0,0,.7); }
-.tagline { margin: 0 0 24px; color: var(--muted); }
-#status { color: var(--muted); max-width: 50ch; margin: 0 auto 16px; min-height: 1.5em; }
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  padding: 14px 28px; border: 0; border-radius: 14px; background: var(--accent);
-  color: #04110a; font: 700 17px/1 ui-sans-serif, system-ui, sans-serif; cursor: pointer;
-  transition: background .12s; }
-.btn:hover { background: var(--accent-hi); }
-.btn.ghost { background: transparent; color: var(--fg); border: 1px solid var(--line); font-weight: 600; }
-.btn.ghost:hover { background: var(--card); }
-.small { font-size: 13px; color: var(--faint); }
-.device { margin: 20px auto 0; width: min(100%, 280px); display: flex; gap: 0;
-  border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
-.device button { flex: 1; padding: 10px 8px; border: 0; background: transparent;
-  color: var(--muted); font: 600 13px ui-sans-serif, system-ui, sans-serif; cursor: pointer; }
-.device button.on { background: var(--accent); color: #04140a; }
-#booting { position: absolute; inset: 0; z-index: 4; display: grid; place-items: center;
-  text-align: center; color: var(--fg); background: #060d08; }
-.boot-title { font-size: 24px; font-weight: 800; text-transform: uppercase; margin: 0 0 6px; }
-.boot-phase { color: var(--muted); margin: 0; }
-#fs { position: absolute; right: 12px; bottom: 12px; z-index: 2; width: 40px; height: 40px;
-  display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.18);
-  border-radius: 10px; background: rgba(0,0,0,.55); color: #fff; cursor: pointer; }
-#fs svg { width: 20px; height: 20px; }
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#070b08;color:#eef4ef;font:15px/1.5 system-ui,sans-serif;overflow:hidden}
+.hidden{display:none!important}
+#stage{position:relative;width:100%;height:100%;background:#000}
+canvas{width:100%;height:100%;display:block}
+#panel{position:absolute;inset:0;display:grid;place-items:center;padding:28px;background:radial-gradient(140% 120% at 50% 110%,#123d22 0%,#0b2414 45%,#060d08 100%)}
+.view{width:min(100%,480px);text-align:center}
+.brand{margin:0 0 8px;font-size:30px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;text-shadow:0 2px 18px rgba(0,0,0,.7)}
+.tagline{margin:0 0 24px;color:#9fb3a5}
+#status{color:#9fb3a5;max-width:50ch;margin:0 auto 16px;min-height:1.5em}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 28px;border:0;border-radius:14px;background:#34b866;color:#04110a;font:700 17px/1 system-ui,sans-serif;cursor:pointer}
+.btn:active{background:#45cf79}
+.device{margin:20px auto 0;width:min(100%,280px);display:flex;border:1px solid rgba(255,255,255,.12);border-radius:10px;overflow:hidden}
+.device button{flex:1;padding:10px 8px;border:0;background:transparent;color:#9fb3a5;font:600 13px system-ui,sans-serif;cursor:pointer}
+.device button.on{background:#34b866;color:#04140a}
+#booting{position:absolute;inset:0;z-index:4;display:grid;place-items:center;text-align:center;color:#eef4ef;background:#060d08}
+.boot-title{font-size:24px;font-weight:800;text-transform:uppercase;margin:0 0 6px}
+.boot-phase{color:#9fb3a5;margin:0}
+#fs{position:absolute;right:12px;bottom:12px;z-index:2;width:40px;height:40px;display:grid;place-items:center;padding:0;border:1px solid rgba(255,255,255,.18);border-radius:10px;background:rgba(0,0,0,.55);color:#fff;cursor:pointer}
+#fs svg{width:20px;height:20px}
 </style>
 </head>
 <body>
-<main>
-  <div id="stage">
-    <canvas id="canvas" width="1024" height="768" tabindex="0"></canvas>
-    <button id="fs" title="Fullscreen (Alt+Enter)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-        <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>
-      </svg>
-    </button>
-    <div id="panel">
-      <!-- Loading / No Files -->
-      <section id="view-loading" class="view">
-        <h1 class="brand">IGI 2: Covert Strike</h1>
-        <p id="status">Loading…</p>
-        <label id="pick" class="btn ghost hidden">Select Game Folder
-          <input type="file" webkitdirectory multiple hidden>
-        </label>
-        <p id="help" class="small hidden">Place your IGI 2 game folder as <b>game/</b> in the app, then tap above.</p>
-      </section>
-      <!-- Home -->
-      <section id="view-home" class="view hidden">
-        <h1 class="brand">IGI 2: Covert Strike</h1>
-        <p class="tagline">I'm Going In.</p>
-        <button id="play" class="btn">▶ Play</button>
-        <div class="device" id="device">
-          <button type="button" data-device="touch">Phone</button>
-          <button type="button" data-device="pc" class="on">Keyboard</button>
-        </div>
-        <p class="small" style="margin-top:16px">
-          <a href="#" id="reset" style="color:var(--muted)">Reload</a>
-        </p>
-      </section>
+<div id="stage">
+<canvas id="canvas" width="1024" height="768" tabindex="0"></canvas>
+<button id="fs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+
+<div id="panel">
+  <!-- HOME – Pehle se visible (hidden NAHI hai) -->
+  <section id="view-home" class="view">
+    <h1 class="brand">IGI 2</h1>
+    <p class="tagline">Covert Strike</p>
+    <p id="status"></p>
+    <button id="play" class="btn">▶ Play</button>
+    <div class="device" id="device">
+      <button type="button" data-device="touch">Phone</button>
+      <button type="button" data-device="pc" class="on">Keyboard</button>
     </div>
-    <div id="booting" class="hidden">
-      <h2 class="boot-title">IGI 2: Covert Strike</h2>
-      <p class="boot-phase">Starting the game…</p>
-    </div>
-  </div>
-</main>
+    <p style="margin-top:16px;font-size:13px;color:#6f8576"><a href="#" id="reset" style="color:#9fb3a5">Reload</a></p>
+  </section>
+
+  <!-- LOADING – hidden (sirf error pe show hoga) -->
+  <section id="view-loading" class="view hidden">
+    <h1 class="brand">IGI 2</h1>
+    <p id="status2">Loading…</p>
+  </section>
+</div>
+
+<div id="booting" class="hidden">
+  <h2 class="boot-title">IGI 2</h2>
+  <p class="boot-phase">Starting…</p>
+</div>
+</div>
+
 <script src="lan.js"></script>
 <script src="controls.js"></script>
 <script src="touch.js"></script>

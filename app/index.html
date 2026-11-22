@@ -1,55 +1,386 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Bare Web Template</title>
-    <script>
-      // Apply the saved theme before first paint, so there is no flash.
-      try {
-        var saved = localStorage.getItem("theme");
-        var dark = saved
-          ? saved === "dark"
-          : matchMedia("(prefers-color-scheme: dark)").matches;
-        if (dark) document.documentElement.classList.add("dark");
-      } catch (e) {}
-    </script>
-    <link rel="stylesheet" href="./style.css" />
-  </head>
-  <body>
-    <header class="bar">
-      <span class="brand">Bare Template</span>
-      <button
-        id="theme-toggle"
-        class="icon-btn"
-        type="button"
-        aria-label="Switch to dark mode"
-        aria-pressed="false"
-      >
-        <svg class="icon moon" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" />
-        </svg>
-        <svg class="icon sun" viewBox="0 0 24 24" aria-hidden="true">
-          <circle cx="12" cy="12" r="4" />
-          <path
-            d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"
-          />
-        </svg>
-      </button>
-    </header>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<title>IGI 2: Covert Strike</title>
+<link rel="icon" type="image/png" sizes="48x48" href="icons/favicon-48.png">
+<meta name="theme-color" content="#070b08">
+<style>
+  :root {
+    --bg: #070b08; --fg: #eef4ef; --muted: #9fb3a5; --faint: #6f8576;
+    --accent: #34b866; --accent-hi: #45cf79; --ball: #d23a2f;
+    --card: rgba(255, 255, 255, .055); --card-hi: rgba(255, 255, 255, .09); --line: rgba(255, 255, 255, .12);
+    --field: rgba(0, 0, 0, .28); --radius: 14px;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); overflow-x: hidden;
+    font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 12px; padding: 16px; }
+  #subcap { position: absolute; z-index: 2; pointer-events: none; box-sizing: border-box; padding: 2px 5px;
+    font: 600 16px/1.22 "Avenir Next Condensed", "Roboto Condensed", "Arial Narrow", sans-serif-condensed, sans-serif;
+    font-stretch: condensed; letter-spacing: .01em; color: #e8e8e8; text-align: left; }
+  #subcap.band { background: #000; }
+  #subcap.panel { background: rgba(4, 22, 6, .93); border: 1px solid rgba(70, 200, 90, .7); }
+  #stage { position: relative; width: min(100%, calc((100vh - 150px) * 4 / 3)); aspect-ratio: 4 / 3; background: #000;
+    border-radius: 12px; overflow: hidden; box-shadow: 0 30px 80px rgba(0, 0, 0, .55); }
+  #stage:fullscreen { width: 100vw; height: 100vh; aspect-ratio: auto; border-radius: 0; box-shadow: none; }
+  canvas { width: 100%; height: 100%; display: block; cursor: none; }
+  .hidden { display: none !important; }
+  #panel { position: absolute; inset: 0; overflow: auto; display: grid; place-items: center; padding: 28px;
+    background:
+      radial-gradient(120% 80% at 50% -10%, rgba(255, 255, 255, .10), transparent 60%),
+      repeating-linear-gradient(90deg, rgba(255, 255, 255, .025) 0 9%, transparent 9% 18%),
+      radial-gradient(140% 120% at 50% 110%, #123d22 0%, #0b2414 45%, #060d08 100%); }
+  #poster-wrap { position: absolute; inset: 0; z-index: 0; }
+  #poster-wrap img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+    object-position: center 18%; filter: blur(2px) brightness(.84) saturate(1.1); transform: scale(1.03); }
+  #poster-wrap .scrim { position: absolute; inset: 0; background:
+      radial-gradient(54% 46% at 50% 58%, rgba(2, 5, 3, .52), rgba(2, 5, 3, 0) 72%),
+      linear-gradient(rgba(4, 7, 5, .34), rgba(5, 9, 6, .12) 30%, rgba(5, 9, 6, .18) 62%, rgba(4, 7, 5, .5)); }
+  .brand { margin: 0 auto 10px; font-size: 34px; font-weight: 800; letter-spacing: .02em; text-transform: uppercase;
+    text-shadow: 0 2px 18px rgba(0, 0, 0, .7), 0 1px 3px rgba(0, 0, 0, .85); }
+  .tagline { margin: 0 0 26px; color: var(--muted); }
+  .view { width: min(100%, 560px); text-align: center; animation: rise .25s ease-out; position: relative; z-index: 1; }
+  @keyframes rise { from { opacity: 0; transform: translateY(6px); } }
+  .kicker { margin: 0 0 6px; color: var(--accent-hi); font-size: 12px; font-weight: 700; letter-spacing: .22em; text-transform: uppercase; }
+  .small { font-size: 13px; color: var(--faint); }
+  p { margin: 8px 0; }
+  .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; justify-content: center; }
+  @media (max-width: 520px) { .choices { grid-template-columns: 1fr; } }
+  .choice { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 20px 18px; text-align: center;
+    border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); color: var(--fg); font: inherit;
+    cursor: pointer; transition: transform .12s ease, background .12s ease, border-color .12s ease; }
+  .choice:hover { transform: translateY(-2px); background: var(--card-hi); border-color: rgba(255, 255, 255, .22); }
+  .choice svg { width: 30px; height: 30px; color: var(--accent); }
+  .choice b { font-size: 18px; }
+  .choice span { color: var(--muted); font-size: 14px; }
+  button { font: inherit; cursor: pointer; border-radius: 10px; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 20px; border: 0;
+    background: var(--accent); color: #04110a; font-weight: 700; transition: background .12s ease; }
+  .btn:hover { background: var(--accent-hi); }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .btn.ghost { background: transparent; color: var(--fg); border: 1px solid var(--line); font-weight: 600; }
+  .btn.ghost:hover { background: var(--card-hi); }
+  .back { position: absolute; top: 16px; left: 16px; padding: 6px 12px; border: 0; background: transparent; color: var(--muted); }
+  .back:hover { color: var(--fg); }
+  input, select { font: inherit; color: var(--fg); background: var(--field); border: 1px solid var(--line); border-radius: 10px;
+    padding: 10px 12px; min-width: 0; }
+  input::placeholder { color: var(--faint); }
+  label.field { display: grid; gap: 6px; text-align: left; font-size: 13px; color: var(--muted); }
+  .card { padding: 18px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); text-align: left; }
+  .card h2 { margin: 0 0 4px; font-size: 16px; }
+  .stack { display: grid; gap: 14px; }
+  .row { display: flex; gap: 10px; }
+  .row > input { flex: 1; }
+  .or { display: flex; align-items: center; gap: 12px; color: var(--faint); font-size: 13px; }
+  .or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+  #np-code { text-transform: uppercase; letter-spacing: .15em; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .msg { min-height: 1.5em; color: #f2b8a8; font-size: 14px; }
+  .code { font: 800 clamp(30px, 6vw, 42px)/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .18em; margin: 6px 0 2px; }
+  .players { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  .players li { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; background: var(--field); text-align: left; }
+  .players li.empty { color: var(--faint); border: 1px dashed var(--line); background: transparent; }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; flex: none; font-weight: 700;
+    background: #1d5a33; color: #d8f5e2; }
+  .players .who { flex: 1; min-width: 0; }
+  .players .who b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .players .who small { color: var(--faint); }
+  .tag { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; padding: 2px 8px; border-radius: 99px;
+    background: var(--card-hi); color: var(--muted); }
+  .spinner { display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--line);
+    border-top-color: var(--accent); animation: spin .9s linear infinite; vertical-align: -1px; margin-right: 6px; }
+  @keyframes spin { to { transform: rotate(1turn); } }
+  progress { width: min(100%, 320px); height: 8px; margin-top: 14px; appearance: none; border: 0; border-radius: 99px;
+    overflow: hidden; background: var(--field); }
+  progress::-webkit-progress-bar { background: var(--field); }
+  progress::-webkit-progress-value { background: var(--accent); border-radius: 99px; }
+  #status { font-variant-numeric: tabular-nums; color: var(--muted); max-width: 52ch; margin-inline: auto; }
+  #eta { margin: 8px 0 0; font-size: 13px; color: var(--faint); font-variant-numeric: tabular-nums; }
+  #fs { position: absolute; right: 12px; bottom: 12px; z-index: 2; width: 40px; height: 40px; display: grid; place-items: center;
+    padding: 0; border: 1px solid rgba(255, 255, 255, .18); border-radius: 10px; background: rgba(0, 0, 0, .55); color: #fff;
+    backdrop-filter: blur(4px); opacity: 0; transition: opacity .25s ease; }
+  #stage.awake #fs, #fs:focus-visible { opacity: 1; }
+  #fs svg { width: 20px; height: 20px; }
+  #fstip, #ctltip, #locktip { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 2; padding: 6px 14px; border-radius: 99px;
+    background: rgba(0, 0, 0, .65); color: #fff; font-size: 13px; pointer-events: none; transition: opacity .4s ease; white-space: nowrap; }
+  #ctltip { opacity: 0; }
+  #soundtip { position: absolute; left: 50%; top: 16px; transform: translateX(-50%); z-index: 2; padding: 6px 14px; border-radius: 99px;
+    background: rgba(0, 0, 0, .65); color: #fff; font-size: 13px; pointer-events: none; }
+  #refull { position: absolute; left: 50%; top: calc(10px + env(safe-area-inset-top, 0px)); transform: translateX(-50%);
+    z-index: 6; display: none; align-items: center; gap: 7px; padding: 9px 18px; border-radius: 99px;
+    border: 1px solid rgba(255, 255, 255, .25); background: rgba(8, 14, 10, .72); color: #fff; font-weight: 600; font-size: 13.5px;
+    backdrop-filter: blur(8px); box-shadow: 0 8px 24px rgba(0, 0, 0, .5); }
+  #refull svg { width: 16px; height: 16px; }
+  body.touch.playing:not(.fs) #refull { display: inline-flex; }
+  kbd { font: 600 12px ui-monospace, SFMono-Regular, Menlo, monospace; padding: 1px 6px; border-radius: 5px;
+    border: 1px solid rgba(255, 255, 255, .25); background: rgba(255, 255, 255, .08); }
+  #netstatus { position: absolute; top: 10px; right: 10px; padding: 4px 10px; border-radius: 99px; background: rgba(0, 0, 0, .6);
+    color: #fff; font: 12px/1.5 ui-sans-serif, system-ui, sans-serif; pointer-events: none; backdrop-filter: blur(4px); }
+  #netstatus.bad { background: rgba(170, 20, 20, .88); }
+  #rotate { display: none; }
+  @media (orientation: portrait) {
+    body.touch #rotate { display: grid; place-items: center; position: absolute; inset: 0; z-index: 5; padding: 24px;
+      background: #000; color: #fff; font-size: 17px; text-align: center; }
+  }
+  #touch { position: absolute; inset: 0; z-index: 3; touch-action: none; user-select: none; -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    --k: 1; --a: 1; --u: calc(clamp(48px, 14vmin, 64px) * var(--k)); --f: calc(clamp(80px, 24vmin, 108px) * var(--k)); --g: 10px;
+    --sk: calc(clamp(120px, 36vmin, 170px) * var(--k)); --tb: calc(clamp(44px, 12vmin, 56px) * var(--k));
+    --sr: max(18px, env(safe-area-inset-right)); --sl: max(18px, env(safe-area-inset-left)); --sb: 20px;
+    --st: max(10px, env(safe-area-inset-top)); }
+  #touch.off { display: none; }
+  #touch .t-look { position: absolute; inset: 0; }
+  #touch .t-stick { position: absolute; left: var(--sl); bottom: var(--sb);
+    width: calc(var(--sk) * var(--bk, 1)); aspect-ratio: 1; border-radius: 50%; opacity: var(--a);
+    background: rgba(255, 255, 255, .08); border: 2px solid rgba(255, 255, 255, .22); }
+  #touch .t-knob { position: absolute; inset: 30%; border-radius: 50%; background: rgba(255, 255, 255, .35);
+    border: 2px solid rgba(255, 255, 255, .5); pointer-events: none; }
+  #touch .t-btn { position: absolute; display: grid; place-items: center; align-content: center; padding: 0;
+    width: calc(var(--u) * var(--bk, 1)); aspect-ratio: 1; border-radius: 50%; touch-action: none; opacity: var(--a);
+    border: 2px solid rgba(255, 255, 255, .3); background: rgba(0, 0, 0, .35); color: rgba(255, 255, 255, .9);
+    font: 700 clamp(9px, 2.6vmin, 11px)/1.1 ui-sans-serif, system-ui, sans-serif; letter-spacing: .03em;
+    transition: opacity .25s ease; }
+  #touch .t-btn small { font-size: .8em; font-weight: 600; opacity: .7; }
+  #touch .t-btn.on { background: rgba(52, 184, 102, .55); border-color: rgba(120, 230, 160, .8); }
+  #touch.menus .t-btn:not(.b-menu):not(.b-gear), #touch.menus .t-stick { opacity: calc(var(--a) * .35); }
+  #touch .b-fire { width: calc(var(--f) * var(--bk, 1)); right: var(--sr); bottom: var(--sb);
+    background: rgba(210, 58, 47, .4); border-color: rgba(255, 150, 140, .5); font-size: clamp(12px, 3.4vmin, 15px); }
+  #touch .b-jump { right: calc(var(--sr) + (var(--f) - var(--u)) / 2); bottom: calc(var(--sb) + var(--f) + var(--g)); }
+  #touch .b-crouch { right: calc(var(--sr) + var(--f) + var(--g)); bottom: var(--sb); }
+  #touch .b-scope { --s: calc(var(--u) * 1.15); width: calc(var(--s) * var(--bk, 1)); right: calc(var(--sr) + var(--f) + var(--g) - (var(--s) - var(--u)) / 2);
+    bottom: calc(var(--sb) + var(--u) + var(--g) + 6px); border-color: rgba(255, 255, 255, .5); font-size: clamp(8px, 2.3vmin, 10px); }
+  #touch .b-use { right: calc(var(--sr) + var(--f) + 2 * var(--g) + var(--u)); bottom: var(--sb); }
+  #touch .b-reload { right: calc(var(--sr) + var(--f) + 2 * var(--g) + var(--u)); bottom: calc(var(--sb) + var(--u) + var(--g) + 6px); }
+  #touch .b-weapon { left: 50%; transform: translateX(-50%); bottom: var(--sb); }
+  #touch .b-walk { left: calc(var(--sl) + var(--sk) + var(--g) + var(--u) * .1); bottom: calc(var(--sb) + var(--sk) * .55 + var(--u) * 1.2 + var(--g)); }
+  #touch .b-fire2 { --s: calc(var(--u) * 1.2); width: calc(var(--s) * var(--bk, 1)); left: calc(var(--sl) + var(--sk) + var(--g));
+    bottom: calc(var(--sb) + var(--sk) * 0.55); background: rgba(210, 58, 47, .3); border-color: rgba(255, 150, 140, .45); }
+  #touch .b-peek { right: calc(var(--sr) + (var(--f) - var(--u)) / 2); bottom: calc(var(--sb) + var(--f) + 2 * var(--g) + var(--u)); }
+  #touch .b-alt { right: calc(var(--sr) + var(--f) + 3 * var(--g) + 2 * var(--u)); bottom: calc(var(--sb) + var(--u) * 1.62 + var(--g) + 6px); }
+  #touch .b-zin, #touch .b-zout { width: calc(var(--tb) * var(--bk, 1)); font-size: clamp(16px, 4.5vmin, 20px);
+    bottom: calc(var(--sb) + var(--u) * 2.9 + 2 * var(--g) + 12px); }
+  #touch .b-zin { right: calc(var(--sr) + var(--f) + var(--g) + (var(--u) - var(--tb)) / 2); }
+  #touch .b-zout { right: calc(var(--sr) + var(--f) + 2 * var(--g) + var(--u) + (var(--u) - var(--tb)) / 2); }
+  #touch .b-stand, #touch .b-prone, #touch .b-inv, #touch .b-drop, #touch .b-slots { width: calc(var(--tb) * var(--bk, 1)); left: max(12px, env(safe-area-inset-left)); }
+  #touch .b-stand { top: calc(var(--st) + 1.35 * var(--tb) + 12px); }
+  #touch .b-prone { top: calc(var(--st) + 2.35 * var(--tb) + 18px); }
+  #touch .b-inv { left: calc(max(12px, env(safe-area-inset-left)) + var(--tb) + 6px); top: calc(var(--st) + 1.35 * var(--tb) + 12px); }
+  #touch .b-drop { left: calc(max(12px, env(safe-area-inset-left)) + var(--tb) + 6px); top: calc(var(--st) + 2.35 * var(--tb) + 18px); }
+  #touch .b-slots { left: calc(max(12px, env(safe-area-inset-left)) + 2 * (var(--tb) + 6px)); top: calc(var(--st) + 1.85 * var(--tb) + 15px); font-size: clamp(9px, 2.4vmin, 11px); }
+  #touch .b-bino, #touch .b-therm, #touch .b-map, #touch .b-menu, #touch .b-gear {
+    top: var(--st); width: calc(var(--tb) * var(--bk, 1)); }
+  #touch .b-gear { right: max(12px, env(safe-area-inset-right)); font-size: clamp(16px, 4.5vmin, 20px); }
+  #touch .b-menu { right: calc(max(12px, env(safe-area-inset-right)) + 1 * (var(--tb) + 6px)); }
+  #touch .b-map { right: calc(max(12px, env(safe-area-inset-right)) + 2 * (var(--tb) + 6px)); }
+  #touch .b-bino { right: calc(max(12px, env(safe-area-inset-right)) + 3 * (var(--tb) + 6px)); }
+  #touch .b-therm { right: calc(max(12px, env(safe-area-inset-right)) + 4 * (var(--tb) + 6px)); }
+  .play-btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; width: min(100%, 300px); margin: 6px auto 0;
+    padding: 15px 24px; border: 0; border-radius: 16px; background: var(--accent); color: #04110a; font: 700 18px/1 ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: .01em; box-shadow: 0 12px 30px rgba(52, 184, 102, .28); transition: transform .12s ease, background .12s ease, box-shadow .12s ease; }
+  .play-btn:hover { background: var(--accent-hi); transform: translateY(-1px); box-shadow: 0 16px 36px rgba(52, 184, 102, .34); }
+  .play-btn:active { transform: translateY(0); }
+  .play-btn svg { width: 22px; height: 22px; }
+  .alt-btn { display: flex; align-items: center; justify-content: center; gap: 12px; width: min(100%, 300px); margin: 12px auto 0; padding: 11px 18px;
+    border: 1px solid rgba(255, 255, 255, .22); border-radius: 14px; background: rgba(8, 14, 10, .55); color: var(--fg);
+    backdrop-filter: blur(4px); transition: background .12s ease, border-color .12s ease, transform .12s ease; }
+  .alt-btn:hover { background: rgba(255, 255, 255, .1); border-color: rgba(255, 255, 255, .34); transform: translateY(-1px); }
+  .alt-btn svg { flex: none; width: 24px; height: 24px; color: var(--accent-hi); }
+  .alt-btn span { display: flex; flex-direction: column; align-items: flex-start; font: 700 16px/1.2 ui-sans-serif, system-ui, sans-serif; }
+  .alt-btn small { font: 500 12px/1.3 ui-sans-serif, system-ui, sans-serif; color: var(--muted); }
+  .device { margin: 22px auto 0; width: min(100%, 300px); }
+  .device .seg { background: rgba(0, 0, 0, .3); border-color: rgba(255, 255, 255, .14); border-radius: 10px; display: flex; gap: 0; overflow: hidden; }
+  .device .seg button { flex: 1; padding: 8px 6px; border: 0; background: transparent; color: var(--muted); font: 600 12.5px ui-sans-serif, system-ui, sans-serif; }
+  .device .seg button.on { background: var(--accent); color: #04140a; }
+  .home-links { display: flex; justify-content: center; align-items: center; gap: 22px; margin-top: 18px; }
+  .link-btn { background: transparent; border: 0; padding: 4px 2px; color: var(--muted); font: 500 13px ui-sans-serif, system-ui, sans-serif;
+    text-decoration: none; cursor: pointer; }
+  .link-btn:hover { color: var(--fg); }
+  .home-foot { margin: 26px 0 0; color: var(--faint); font-size: 12px; }
+  .home-foot b { color: var(--muted); font-weight: 600; }
+  .tips { margin: 22px auto 0; max-width: 48ch; min-height: 2.8em; display: flex; gap: 10px;
+    align-items: baseline; justify-content: center; text-align: left; transition: opacity .35s ease; }
+  .tips .tip-eyebrow { flex: none; font: 700 10px/1.7 ui-monospace, SFMono-Regular, Menlo, monospace;
+    letter-spacing: .18em; color: var(--accent-hi); border: 1px solid rgba(69, 207, 121, .4);
+    border-radius: 4px; padding: 1px 6px; }
+  .tips .tip-text { color: var(--fg); font-size: 13.5px; line-height: 1.5; }
+  #booting { position: absolute; inset: 0; z-index: 4; display: grid; place-items: center; padding: 24px;
+    text-align: center; color: var(--fg);
+    background:
+      radial-gradient(120% 90% at 50% -10%, rgba(52, 184, 102, .10), transparent 55%),
+      repeating-linear-gradient(90deg, rgba(255, 255, 255, .02) 0 9%, transparent 9% 18%),
+      radial-gradient(140% 120% at 50% 110%, #123d22 0%, #0b2414 45%, #060d08 100%); }
+  #booting .boot-inner { position: relative; width: min(100%, 460px); animation: rise .3s ease-out; }
+  #booting .boot-title { margin: 0 0 6px; font-size: 26px; font-weight: 800; letter-spacing: .02em;
+    text-transform: uppercase; text-shadow: 0 2px 18px rgba(0, 0, 0, .7); }
+  #booting .boot-phase { margin: 0; color: var(--muted); font-variant-numeric: tabular-nums; }
+  #booting .radar { position: relative; width: 92px; height: 92px; margin: 0 auto 22px; border-radius: 50%;
+    border: 1px solid rgba(69, 207, 121, .35); background: radial-gradient(circle, rgba(52, 184, 102, .10), transparent 70%); }
+  #booting .radar::before, #booting .radar::after { content: ""; position: absolute; border-radius: 50%;
+    border: 1px solid rgba(69, 207, 121, .18); }
+  #booting .radar::before { inset: 0; }
+  #booting .radar::after { inset: 30%; }
+  #booting .radar .sweep { position: absolute; inset: -1px; border-radius: 50%;
+    background: conic-gradient(from 0deg, rgba(69, 207, 121, .55), rgba(69, 207, 121, 0) 42%);
+    animation: radar 2.4s linear infinite; }
+  #booting .radar .ping { position: absolute; top: 22%; left: 62%; width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent-hi); box-shadow: 0 0 10px var(--accent-hi); animation: ping 2.4s ease-out infinite; }
+  @keyframes radar { to { transform: rotate(1turn); } }
+  @keyframes ping { 0%, 55% { opacity: 0; } 62% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(2.3); } }
+  #booting .tips { margin-top: 24px; }
+  #crashnote { margin: 0 auto 16px; max-width: 46ch; padding: 10px 14px; border-radius: 10px; text-align: left; font-size: 13px; line-height: 1.45;
+    background: rgba(210, 58, 47, .18); border: 1px solid rgba(255, 150, 140, .4); color: var(--fg); }
+  #tfailed { position: absolute; left: 50%; top: 7%; transform: translateX(-50%); z-index: 4; pointer-events: none;
+    max-width: 92%; padding: 8px 14px; border-radius: 8px; background: rgba(0, 0, 0, .78); color: #fff;
+    font: 600 14px/1.3 ui-sans-serif, system-ui, sans-serif; text-align: center; }
+  body.coarse main { padding: 0; }
+  body.coarse #stage, body.coarse #stage:fullscreen { position: fixed; inset: 0; width: auto; height: auto; aspect-ratio: auto;
+    border-radius: 0; box-shadow: none; }
+  body.coarse .desk { display: none !important; }
+  body.coarse .mob { display: inline !important; }
+  .mob { display: none; }
+</style>
+</head>
+<body>
+<main>
+  <div id="stage">
+    <div id="subcap" class="hidden" aria-live="polite"></div>
+    <canvas id="canvas" width="1024" height="768" tabindex="0"></canvas>
+    <div id="netstatus" class="hidden"></div>
+    <button id="fs" title="Fullscreen (Alt+Enter)" aria-label="Toggle fullscreen">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"></path></svg>
+    </button>
+    <div id="soundtip" class="hidden">Tap the game or press a key to turn on sound</div>
+    <button id="refull" type="button" aria-label="Enter fullscreen">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"></path></svg>
+      Fullscreen</button>
+    <div id="rotate">Turn your device sideways to play</div>
+    <div id="fstip" class="hidden">Press <kbd>Alt</kbd> + <kbd>Enter</kbd> for fullscreen</div>
+    <div id="ctltip" class="hidden"></div>
+    <div id="locktip" class="hidden">Click the game to capture the mouse (full 360° turning)</div>
+    <div id="panel">
+      <div id="poster-wrap" aria-hidden="true"><img src="poster.jpg" alt="" onerror="this.closest('#poster-wrap').remove()"><span class="scrim"></span></div>
 
-    <main>
-      <section class="card">
-        <h1>Hello</h1>
-        <p class="muted">
-          Everything is local: <code>index.html</code>, <code>style.css</code>,
-          <code>script.js</code>. No CDN, no icons to download (inline SVG only).
-        </p>
-        <button id="btn" class="btn" type="button">Click me</button>
-        <p id="out" class="muted" role="status"></p>
+      <!-- Loading -->
+      <section id="view-loading" class="view">
+        <h1 class="brand">IGI 2: Covert Strike</h1>
+        <p id="status">Loading necessary files to start the game…</p>
+        <progress id="progress" max="1" value="0"></progress>
+        <p id="eta" class="hidden"></p>
+        <div>
+          <button id="download" class="btn hidden" style="margin-top:16px"></button>
+          <label id="pick" class="btn hidden" style="margin-top:16px">Choose game folder
+            <input id="folder" type="file" webkitdirectory="" multiple="" hidden="">
+          </label>
+        </div>
+        <p id="help" class="hidden small">Pick your IGI 2: Covert Strike folder: the one that holds <b>igi2.exe</b>, <b>MISSIONS</b> and <b>COMMON</b>.</p>
+        <div id="tips" class="tips" aria-live="polite"><span class="tip-eyebrow">INTEL</span><span class="tip-text">Crouch or go prone to stay out of sight.</span></div>
       </section>
-    </main>
 
-    <script src="./script.js"></script>
-  </body>
-</html>
+      <!-- Home -->
+      <section id="view-home" class="view hidden">
+        <h1 class="brand">IGI 2: Covert Strike</h1>
+        <p class="tagline">I'm Going In.</p>
+        <div id="crashnote" class="hidden" role="status">The game stopped and the browser reloaded the page. Close other apps before playing.</div>
+        <button id="play" class="play-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="8"></circle><path d="M12 2v5M12 17v5M2 12h5M17 12h5"></path></svg>
+          Play
+        </button>
+        <button id="go-online" class="alt-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="9" cy="8" r="3.2"></circle><path d="M3 19c.6-3.2 3-5 6-5s5.4 1.8 6 5"></path><circle cx="17" cy="9" r="2.6"></circle><path d="M16.5 14.2c2.4.2 4 1.8 4.5 4.8"></path></svg>
+          <span>Multiplayer <small>Host or join a room</small></span>
+        </button>
+        <div id="device" class="device" role="radiogroup" aria-label="Playing on">
+          <div class="seg">
+            <button type="button" data-device="touch" role="radio">Phone / tablet</button>
+            <button type="button" data-device="pc" role="radio" class="on">Keyboard &amp; mouse</button>
+          </div>
+        </div>
+        <div class="home-links">
+          <a href="#" id="reset" class="link-btn">Reload the game again</a>
+        </div>
+        <p class="home-foot">IGI 2: Covert Strike – Offline</p>
+      </section>
+
+      <!-- Multiplayer -->
+      <section id="view-online" class="view hidden">
+        <button class="back" data-go="home">← Back</button>
+        <div class="stack">
+          <div>
+            <h2 style="margin:0;font-size:24px">Multiplayer</h2>
+            <p class="small" style="margin:4px 0 0">Up to 16 players in a room. One hosts, friends join with the code.</p>
+          </div>
+          <label class="field">Your name
+            <input id="np-name" placeholder="Player" maxlength="15" autocomplete="nickname">
+          </label>
+          <div class="card">
+            <h2>Host a match</h2>
+            <label class="field" style="margin:0 0 12px">Map
+              <select id="np-map">
+                <option value="01">Redstone</option><option value="02">Forest Raid</option><option value="03">Sandstorm</option>
+                <option value="04">Timberland</option><option value="05" selected>Chinese Temple</option><option value="06">Jungle</option>
+              </select>
+            </label>
+            <button id="np-host" class="btn" style="width:100%">Create room</button>
+          </div>
+          <div class="or">or</div>
+          <div class="card">
+            <h2>Join a match</h2>
+            <div class="row">
+              <input id="np-code" placeholder="ROOM CODE" maxlength="8" autocapitalize="characters" autocomplete="off" spellcheck="false">
+              <button id="np-join" class="btn ghost">Join</button>
+            </div>
+          </div>
+          <p id="np-msg" class="msg"></p>
+        </div>
+      </section>
+
+      <!-- Lobby -->
+      <section id="view-lobby" class="view hidden">
+        <button id="np-leave" class="back">← Leave room</button>
+        <div class="stack">
+          <div>
+            <p class="small" style="margin:0">Room code</p>
+            <div class="code" id="np-room"></div>
+            <button id="np-copy" class="btn ghost" style="margin-top:12px">Copy invite link</button>
+          </div>
+          <ul class="players" id="np-players"></ul>
+          <div id="np-hostctl" class="hidden">
+            <p class="small" style="margin:0 0 8px">Map: <b id="np-mapname"></b></p>
+            <button id="np-start" class="btn" style="width:100%">Start the match</button>
+          </div>
+          <div id="np-guestctl" class="hidden">
+            <button id="np-go" class="btn" style="width:100%" disabled>Waiting for the host…</button>
+          </div>
+          <p id="np-lobbymsg" class="msg"></p>
+        </div>
+      </section>
+    </div>
+    <div id="booting" class="hidden" aria-live="polite">
+      <div class="boot-inner">
+        <div class="radar"><span class="sweep"></span><span class="ping"></span></div>
+        <h2 class="boot-title">IGI 2: Covert Strike</h2>
+        <p class="boot-phase">Starting the game…</p>
+        <div class="tips"><span class="tip-eyebrow">INTEL</span><span class="tip-text"></span></div>
+      </div>
+    </div>
+  </div>
+</main>
+<script>
+  function rcLoadFail(el) {
+    var st = document.getElementById('status');
+    if (st) st.innerHTML = 'Failed to load: ' + (el && el.getAttribute('src') || 'unknown') + '. <button type="button" class="btn" onclick="location.reload()">Retry</button>';
+  }
+</script>
+<script src="lan.js" onerror="rcLoadFail(this)"></script>
+<script src="controls.js" onerror="rcLoadFail(this)"></script>
+<script src="touch.js" onerror="rcLoadFail(this)"></script>
+<script src="loader.js" onerror="rcLoadFail(this)"></script>
+</body>
+</html>   

@@ -6,10 +6,12 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
+import androidx.webkit.WebViewAssetLoader;
 
 public class MainActivity extends Activity {
 
     private WebView webView;
+    private WebViewAssetLoader assetLoader;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,13 +34,26 @@ public class MainActivity extends Activity {
         s.setLoadWithOverviewMode(true);
         s.setSupportZoom(false);
         s.setDatabaseEnabled(true);
-        s.setAllowContentAccess(true);
+
+        // WebViewAssetLoader – assets ko HTTPS pe serve karta hai
+        // Ye WASM streaming compile ko enable karta hai
+        assetLoader = new WebViewAssetLoader.Builder()
+                .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
+                .build();
+
+        webView.setWebChromeClient(new WebChromeClient());
+        webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public android.webkit.WebResourceResponse shouldInterceptRequest(
+                    WebView view, android.webkit.WebResourceRequest request) {
+                return assetLoader.shouldInterceptRequest(request.getUrl());
+            }
+        });
 
         webView.setBackgroundColor(0xFF070B08);
-        webView.setWebChromeClient(new WebChromeClient());
-        webView.setWebViewClient(new WebViewClient());
 
-        webView.loadUrl("file:///android_asset/index.html");
+        // HTTPS URL load karo (file:// NAHI)
+        webView.loadUrl(assetLoader.forResourceUrl("index.html"));
     }
 
     @Override
